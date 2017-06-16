@@ -4,6 +4,8 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
@@ -12,6 +14,8 @@ import android.util.Log;
 import android.webkit.ConsoleMessage;
 import android.webkit.URLUtil;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -60,26 +64,27 @@ public class mBanner extends WebView {
     public void loadAds(String zoneid) {
         String url = "https://adxscope.com/mads.html?zoneid=" + zoneid + "&color=white";
         if (URLUtil.isValidUrl(url)) {
-            super.loadUrl(url);
-            super.setWebViewClient(new MyWebViewClient());
-            super.clearCache(true);
-            super.setBackgroundColor(Color.parseColor("#919191"));
-            WebSettings webSettings = super.getSettings();
-            webSettings.setJavaScriptEnabled(true);
-            if (Build.VERSION.SDK_INT >= 21) {
-                webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-            }
-
-            super.setWebChromeClient(new WebChromeClient()
-            {
-                @Override
-                public boolean onConsoleMessage(ConsoleMessage cm) {
-                    //Log.d("TAG", cm.message() + " at " + cm.sourceId() + ":" + cm.lineNumber());
-                    return true;
+            if(isConnected3G(getContext()) || isConnectedWifi(getContext())) {
+                super.loadUrl(url);
+                super.setWebViewClient(new MyWebViewClient());
+                super.clearCache(true);
+                WebSettings webSettings = super.getSettings();
+                webSettings.setJavaScriptEnabled(true);
+                if (Build.VERSION.SDK_INT >= 21) {
+                    webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
                 }
 
-            });
-
+                super.setWebChromeClient(new WebChromeClient() {
+                    @Override
+                    public boolean onConsoleMessage(ConsoleMessage cm) {
+                        //Log.d("TAG", cm.message() + " at " + cm.sourceId() + ":" + cm.lineNumber());
+                        return true;
+                    }
+                });
+            }else {
+                String summary = "<html><body style='background: black;'><p style='color: red;'>Unable to load Ads. Please check if your network connection is working properly or try again later.</p></body></html>";
+                super.loadData(summary, "text/html", null);
+            }
         } else {
             Log.e(TAG, "Loaded invalid url in webview");
         }
@@ -98,9 +103,38 @@ public class mBanner extends WebView {
             }
         }
 
+        @SuppressWarnings("deprecation")
+        @Override
+        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+            String html = "<html><body style='background: black;'><p style='color: red;'>Unable to load Ads. Please check if your network connection is working properly or try again later.</p></body></html>";
+            view.loadData(html, "text/html", null);
+        }
+
+        @TargetApi(android.os.Build.VERSION_CODES.M)
+
+        @Override
+        public void onReceivedError(WebView view, WebResourceRequest req, WebResourceError rerr) {
+            // Redirect to deprecated method, so you can use it in all SDK versions
+            onReceivedError(view, rerr.getErrorCode(), rerr.getDescription().toString(), req.getUrl().toString());
+        }
+
+
 
 
     }
+
+    public boolean isConnectedWifi(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        return networkInfo.isConnected();
+    }
+
+    public boolean isConnected3G(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+        return networkInfo.isConnected();
+    }
+
 
 
 
