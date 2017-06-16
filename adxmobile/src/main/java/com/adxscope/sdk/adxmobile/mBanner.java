@@ -11,6 +11,7 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.View;
 import android.webkit.ConsoleMessage;
 import android.webkit.URLUtil;
 import android.webkit.WebChromeClient;
@@ -70,6 +71,21 @@ public class mBanner extends WebView {
                 super.clearCache(true);
                 WebSettings webSettings = super.getSettings();
                 webSettings.setJavaScriptEnabled(true);
+                webSettings.setJavaScriptEnabled(true);
+                webSettings.setLoadWithOverviewMode(true);
+                webSettings.setUseWideViewPort(true);
+                webSettings.setSupportZoom(true);
+                webSettings.setBuiltInZoomControls(false);
+                webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
+                webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+                webSettings.setDomStorageEnabled(true);
+                super.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
+                super.setScrollbarFadingEnabled(true);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    super.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                }
+                
                 if (Build.VERSION.SDK_INT >= 21) {
                     webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
                 }
